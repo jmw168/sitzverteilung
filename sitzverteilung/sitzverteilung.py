@@ -140,6 +140,21 @@ def sitzverteilung(pfad):
     erststimmen = {key: pd.DataFrame(value) for key, value in load_yaml(pfad / 'Erststimme.yaml').items()}
     zweitstimmen = pd.DataFrame(load_yaml(pfad / 'Zweitstimme.yaml'))
 
+    # Setze Variablen aus Einstellungen
+    sitze_geplant = settings_yaml['Sitze']  # erforderlich, kein default
+    try:
+        huerde = settings_yaml['Hürde']
+    except KeyError:
+        huerde = {}
+    try:
+        mindestsitze_methode = settings_yaml['Mindestsitze']
+    except KeyError:
+        mindestsitze_methode = 'Keine'
+    try:
+        ueberhang = settings_yaml['Überhang']
+    except KeyError:
+        ueberhang = 0
+
     # Überprüfe, welche Parteien bei der Sitzverteilung berücksichtigt werden
     zulassung = pd.DataFrame()
 
@@ -166,23 +181,23 @@ def sitzverteilung(pfad):
     zulassung['Ausnahmen'] = False
 
     # Prüfung, welche Kriterien erfüllt sind
-    if 'Prozent' in settings_yaml['Hürde'].keys():
-        zulassung['Prozent'] = zulassung['Prozent'] >= settings_yaml['Hürde']['Prozent']
+    if 'Prozent' in huerde.keys():
+        zulassung['Prozent'] = zulassung['Prozent'] >= huerde['Prozent']
     else:
         zulassung['Prozent'] = False
-    if 'Direkt' in settings_yaml['Hürde'].keys():
-        zulassung['Direkt'] = zulassung['Direkt'] >= settings_yaml['Hürde']['Direkt']
+    if 'Direkt' in huerde.keys():
+        zulassung['Direkt'] = zulassung['Direkt'] >= huerde['Direkt']
     else:
         zulassung['Direkt'] = False
-    if 'Ausnahmen' in settings_yaml['Hürde'].keys():
-        for partei in settings_yaml['Hürde']['Ausnahmen']:
+    if 'Ausnahmen' in huerde.keys():
+        for partei in huerde['Ausnahmen']:
             zulassung.at[partei, 'Ausnahmen'] = True
     zweitstimmen = zweitstimmen.loc[zulassung['Prozent'] | zulassung['Direkt'] | zulassung['Ausnahmen']]
 
     # Überprüfe, ob es "unabhängige" Wahlkreissieger gibt
     unabhaengige = direktmandate.drop(zweitstimmen.index).sum(axis=1)
     unabhaengige = unabhaengige[unabhaengige > 0]
-    gesamtsitze = settings_yaml['Sitze'] - unabhaengige.sum()
+    gesamtsitze = sitze_geplant - unabhaengige.sum()
 
     # Verteilung der Sitze auf die Länder
     print('Verteile Sitze auf Länder')
@@ -196,17 +211,17 @@ def sitzverteilung(pfad):
         erste_unterverteilung[land] = sainte_lague(laender.at[land, 'Sitze'], tabelle, methode=METHODE_STRING)['Sitze']
 
     # Bestimmung der Mindestsitze
-    if settings_yaml['Mindestsitze'] == 'Keine':
+    if mindestsitze_methode == 'Keine':
         mindestsitze = direktmandate
-    elif settings_yaml['Mindestsitze'] == 'Pur':
+    elif mindestsitze_methode == 'Pur':
         mindestsitze = erste_unterverteilung.where(erste_unterverteilung > direktmandate.loc[zweitstimmen.index],
                                                    direktmandate)
-    elif settings_yaml['Mindestsitze'] == 'Mittelwert':
+    elif mindestsitze_methode == 'Mittelwert':
         mittelwert = pd.concat([direktmandate.loc[zweitstimmen.index], erste_unterverteilung])
         mittelwert = mittelwert.groupby(level=0, sort=False).mean().apply(np.floor).astype('int64')
         mindestsitze = mittelwert.where(mittelwert > direktmandate.loc[zweitstimmen.index], direktmandate)
     else:
-        raise ValueError(f'Methode {settings_yaml} für Mindestsitze nicht bekannt')
+        raise ValueError(f'Methode {mindestsitze_methode} für Mindestsitze nicht bekannt')
     mindestsitze = mindestsitze.sum(axis=1)
 
     # Verteilung der gesamtsitzanzahl
@@ -216,8 +231,8 @@ def sitzverteilung(pfad):
     differenz = mindestsitze - stimmen['Sitze']
     differenz = differenz.where(differenz > 0, 0)
     print('Überhangsmandate\n', differenz)
-    while differenz.sum() > settings_yaml['Überhang']:
-        gesamtsitze += differenz.sum() - settings_yaml['Überhang']
+    while differenz.sum() > ueberhang:
+        gesamtsitze += differenz.sum() - ueberhang
         print(f'erhöhe Sitzanzahl auf {gesamtsitze}')
         stimmen = sainte_lague(gesamtsitze, stimmen, methode=METHODE_STRING)
         differenz = mindestsitze - stimmen['Sitze']
