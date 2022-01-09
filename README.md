@@ -38,3 +38,5 @@ werden. Mögliche Optionen sind:
 - `Mittelwert` Die Mindessitzanzahl ergibt sich als Maximum aus Direktmandaten und dem aufgerundeten Mittelwert aus den Sitzen der 1. Unterverteilung und den Direktmandaten für jedes Bundesland (teilweiser Ausgleich zwischen Bundesländern, Bundestagswahlrecht ab 2020)
 
 `Überhang:` Anzahl an Überhangmandaten, die nicht ausgeglichen werden
+
+̀̀̀`Obergrenze:` Maximale Anzahl an Sitzen

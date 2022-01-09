@@ -55,8 +55,12 @@ def sainte_lague_divisor(sitze, tabelle):
     tabelle['Sitze'] = (tabelle['Stimmen'] / divisor).apply(lambda x: x.to_integral_value())
     erste_sitzverteilung = tabelle['Sitze'].copy()
 
+    # bestimme mögliche Divisorengrenzen, vermeide Rundungsfehler in falsche Richtung
+    decimal.setcontext(decimal.Context(rounding=decimal.ROUND_UP))
     tabelle['höherer Divisor'] = (tabelle['Stimmen'] / (tabelle['Sitze'] - halb)).replace(0, decimal.Decimal('nan'))
+    decimal.setcontext(decimal.Context(rounding=decimal.ROUND_DOWN))
     tabelle['niedriger Divisor'] = (tabelle['Stimmen'] / (tabelle['Sitze'] + halb)).replace(0, decimal.Decimal('nan'))
+    decimal.setcontext(decimal.Context(rounding=decimal.ROUND_HALF_UP))
 
     # bestimme Divisorgrenzen
     differenz = tabelle['Sitze'].sum() - sitze
@@ -81,6 +85,8 @@ def sainte_lague_divisor(sitze, tabelle):
     # überprüfe Sitzanzahl erneut
     differenz = tabelle['Sitze'].sum() - sitze
     lose = list(erste_sitzverteilung[(erste_sitzverteilung != tabelle['Sitze'])].index) if not differenz == 0 else []
+    # setze Sitzverteilung auf minimum
+    tabelle['Sitze'] = tabelle['Sitze'] - (tabelle['Sitze'] > erste_sitzverteilung)
 
     return tabelle.drop(['höherer Divisor', 'niedriger Divisor'], axis=1).astype('int64'), lose
 
@@ -108,9 +114,10 @@ def sainte_lague(sitze, stimmen, methode='divisor'):
             raise Exception("Fehler in der Berechnung nach sainte-lague")
     else:
         raise ValueError(f"Methode {methode} nicht existent. Mögliche Optionen sind 'divisor' und 'rangzahl'")
-    if not lose == []:
+    if lose:
         liste = []
-        while len(liste) < int(sitze - dataframe['Sitze'].sum()):
+        anzahl_lose = int(sitze - dataframe['Sitze'].sum())
+        while len(liste) < anzahl_lose:
             lose = pd.Series(['Zufall'] + lose)
             los = input(f'Lose zwischen:\n{lose}\n')
             try:
@@ -119,7 +126,7 @@ def sainte_lague(sitze, stimmen, methode='divisor'):
                 print('Wähle eine Zahl')
                 continue
             if los == 0:
-                liste.extend(random.sample(list(lose.values[1:]), k=int(sitze - dataframe['Sitze'].sum())))
+                liste.extend(random.sample(list(lose.values[1:]), k=anzahl_lose - len(liste)))
             else:
                 try:
                     liste.append(lose[los])
@@ -154,6 +161,10 @@ def sitzverteilung(pfad):
         ueberhang = settings_yaml['Überhang']
     except KeyError:
         ueberhang = 0
+    try:
+        obergrenze = settings_yaml['Obergrenze']
+    except KeyError:
+        obergrenze = np.inf
 
     # Überprüfe, welche Parteien bei der Sitzverteilung berücksichtigt werden
     zulassung = pd.DataFrame()
@@ -224,16 +235,19 @@ def sitzverteilung(pfad):
         raise ValueError(f'Methode {mindestsitze_methode} für Mindestsitze nicht bekannt')
     mindestsitze = mindestsitze.sum(axis=1)
 
-    # Verteilung der gesamtsitzanzahl
+    # Verteilung der Gesamtsitzanzahl
     print('Oberverteilung')
     stimmen = pd.DataFrame({'Stimmen': zweitstimmen.sum(axis=1)})
     stimmen = sainte_lague(gesamtsitze, stimmen, methode=METHODE_STRING)
     differenz = mindestsitze - stimmen['Sitze']
     differenz = differenz.where(differenz > 0, 0)
     print('Überhangsmandate\n', differenz)
-    while differenz.sum() > ueberhang:
+    while differenz.sum() > ueberhang and gesamtsitze < (obergrenze - differenz.sum()):
         gesamtsitze += differenz.sum() - ueberhang
         print(f'erhöhe Sitzanzahl auf {gesamtsitze}')
+        if gesamtsitze >= (obergrenze - differenz.sum()):
+            print(f'Obergrenze von {obergrenze} erreicht')
+            gesamtsitze = (obergrenze - differenz.sum())
         stimmen = sainte_lague(gesamtsitze, stimmen, methode=METHODE_STRING)
         differenz = mindestsitze - stimmen['Sitze']
         differenz = differenz.where(differenz > 0, 0)
