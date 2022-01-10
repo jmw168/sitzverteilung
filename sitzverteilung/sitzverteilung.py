@@ -186,7 +186,7 @@ Berechne die Sitzverteilung mit den Eingabedaten im Verzeichnis
 
     # Zur Übersichtlichkeit in Zukunft: Einstellungen zu dict umbauen
     einstellungen = setze_einstellungen(pfad)
-    direktmandate, mehrheitssieger, zweitstimmen = ermittle_zulassung(einstellungen['huerde'], erststimmen,
+    direktmandate, mehrheitssieger, zweitstimmen = ermittle_zulassung(einstellungen['hürde'], erststimmen,
                                                                       zweitstimmen)
 
     # Überprüfe, ob es "unabhängige" Wahlkreissieger gibt
@@ -207,7 +207,7 @@ Berechne die Sitzverteilung mit den Eingabedaten im Verzeichnis
     differenz = mindestsitze - stimmen['Sitze']
     differenz = differenz.where(differenz > 0, 0)
     print('Überhangsmandate\n', differenz)
-    while differenz.sum() > einstellungen['ueberhang'] and gesamtsitze < (
+    while differenz.sum() > einstellungen['ueberhang'] and gesamtsitze > (
             einstellungen['obergrenze'] - differenz.sum()):
         gesamtsitze += differenz.sum() - einstellungen['ueberhang']
         print(f'erhöhe Sitzanzahl auf {gesamtsitze}')
