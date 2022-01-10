@@ -1,20 +1,35 @@
+"""Dieses Modul stellt verschiedene Hilfsfunktionen für die Sitzverteilungsberechnung zur Verfügung"""
 import decimal
 
-import yaml as yaml
+import yaml
 
 
-def remove_exponent(d):
-    return d.quantize(decimal.Decimal(1)) if d == d.to_integral() else d.normalize()
+def remove_exponent(zahl):
+    """Wandle eine Dezimalzahl mit Exponent in eine Dezimalzahl ohne Exponent um
+
+    :param zahl: Umzuwandelnde Zahl
+    :type zahl: decimal.Decimal
+    :return: Umgewandelte Zahl
+    :rtype: decimal.Decimal
+    """
+    return zahl.quantize(decimal.Decimal(1)) if zahl == zahl.to_integral() else zahl.normalize()
 
 
 def nice_round(first, second) -> str:
+    """
+    Gibt die "schönste" Zahl die zwischen den beiden Parametern liegt, zurück
+
+    :param first: untere Grenze
+    :param second: obere Grenze
+    :return: "schöne" Zahl als string
+    :rtype: str
+    """
     # check if arguments are floats and bring them in correct order. just return the value if both are identical
     if not isinstance(first, (float, int, decimal.Decimal)) or not isinstance(second, (float, int, decimal.Decimal)):
         raise TypeError('nice_round() arguments must be convertable to floats') from None
     if first == second:
-        return first
-    if not first < second:
-        first, second = second, first
+        return str(first)
+    first, second = sorted((first, second))
 
     # make them strings and compare dimensions
     first = str(first)
@@ -23,16 +38,16 @@ def nice_round(first, second) -> str:
     second = second if '.' in second else f'{second}.'
     pre_decimal = len(first.split('.')[0]) - len(second.split('.')[0])
     post_decimal = len(first.split('.')[1]) - len(second.split('.')[1])
-    if not pre_decimal == 0:
-        if pre_decimal < 0:
-            first = ''.join(['0' * abs(pre_decimal), first])
-        elif pre_decimal > 0:
-            second = ''.join(['0' * abs(pre_decimal), second])
-    if not post_decimal == 0:
-        if post_decimal < 0:
-            first = ''.join([first, '0' * abs(post_decimal)])
-        elif pre_decimal > 0:
-            second = ''.join([second, '0' * abs(post_decimal)])
+
+    if pre_decimal < 0:
+        first = ''.join(['0' * abs(pre_decimal), first])
+    elif pre_decimal > 0:
+        second = ''.join(['0' * abs(pre_decimal), second])
+
+    if post_decimal < 0:
+        first = ''.join([first, '0' * abs(post_decimal)])
+    elif pre_decimal > 0:
+        second = ''.join([second, '0' * abs(post_decimal)])
 
     # finally, compare numbers digit-wise
     resulting_number = ''
@@ -46,10 +61,19 @@ def nice_round(first, second) -> str:
                     if '.' not in resulting_number:
                         adding_zeros = len(first.split('.')[0]) - len(resulting_number)
                         resulting_number = ''.join([resulting_number, '0' * adding_zeros])
-                    return resulting_number
+                    break
+            break
+    return resulting_number
 
 
 def load_yaml(filename):
+    """
+    Wrapper um .yaml Datei zu laden
+
+    :param filename: Dateiname
+    :type filename: str
+    :return: Daten aus Datei
+    """
     with open(filename, 'r', encoding='utf8') as file:
         yaml_data = yaml.load(file, Loader=yaml.SafeLoader)
     return yaml_data

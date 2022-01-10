@@ -1,17 +1,27 @@
+"""Einstiegsskript für den Sitzverteilungsrechner"""
+
 import argparse
 from pathlib import Path
 
-from sitzverteilung.download import download
-from sitzverteilung.sitzverteilung import sitzverteilung
+from sitzverteilung.download import download  # pylint: disable=import-error
+from sitzverteilung.sitzverteilung import sitzverteilung  # pylint: disable=import-error
 
 
 def parse():
+    """
+Argumentenparser
+
+    :return: geparste Argumente
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("-b", "--beispiel", help="wähle ein Beispiel aus dem Ordner beispiele", nargs=2, default="")
     return parser.parse_args()
 
 
 def main():
+    """
+Hauptroutine für die Sitzverteilung
+    """
     args = parse()
 
     beispiel = args.beispiel

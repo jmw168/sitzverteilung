@@ -1,15 +1,50 @@
+"""Dieses Modul lädt Wahlergebnisdaten (bisher nur 2021) vom deutschen Bundeswahlleiter herunter und überführt die
+aktuellsten Daten in ein yaml-Format für die Sitzverteilungsberechnung"""
+
 from html.parser import HTMLParser
 
 import pandas as pd
-import requests as requests
-import yaml as yaml
+import requests
+import yaml
 
-from sitzverteilung.hilfsmittel import load_yaml
+from sitzverteilung.hilfsmittel import load_yaml  # pylint: disable=import-error
 
 UNIONSMERGER = False
 
 
 def download(pfad):
+    """
+    Lade die Rohdaten in den Ordner `daten` herunter und erstelle die entsprechenden Dateien im Arbeitsverzeichnis
+
+    :param pfad: der Pfad des Arbeitsverzeichnisses
+    :type pfad: pathlib.Path
+    """
+    lade_herunter(pfad)
+
+    neuste_csv = sorted((pfad / 'daten').glob('kerg2*.csv'))[-1]
+    with open(neuste_csv, encoding='utf-8') as file:
+        for _ in range(0, 6):
+            inhalt = file.readline()
+        print(inhalt.split(';')[:3])
+    alle_ergebnisse = pd.read_csv(neuste_csv, delimiter=';', skiprows=9, encoding='utf8')
+    laender_yaml = load_yaml(pfad / 'Länder.yaml')
+
+    schreibe_zweitstimmen(alle_ergebnisse, laender_yaml, pfad)
+    schreibe_erststimme(alle_ergebnisse, laender_yaml, pfad)
+
+    kandidaten = pd.read_csv(pfad / 'daten/btw21_kandidaturen_utf8.csv', delimiter=';', skiprows=8, encoding='utf8')
+    kandidaten = pd.DataFrame(kandidaten)
+    schreibe_direktkandidaten(kandidaten, pfad)
+    schreibe_listen(kandidaten, pfad)
+
+
+def lade_herunter(pfad):
+    """
+    Lade alle Daten vom Bundeswahlleiter herunter
+
+    :param pfad: Zielpfad des Ordners dateien
+    :type pfad: pathlib.Path
+    """
     ordner = pfad / 'daten'
     if not ordner.exists():
         ordner.mkdir()
@@ -18,13 +53,18 @@ def download(pfad):
     parser = MyHTMLParser(url, ordner)
     parser.feed(bundeswahlleiter.text)
 
-    neuste_csv = sorted((pfad / 'daten').glob('kerg2*.csv'))[-1]
-    with open(neuste_csv) as file:
-        for ii in range(0, 6):
-            inhalt = file.readline()
-        print(inhalt.split(';')[:3])
-    alle_ergebnisse = pd.read_csv(neuste_csv, delimiter=';', skiprows=9, encoding='utf8')
-    laender_yaml = load_yaml(pfad / 'Länder.yaml')
+
+def schreibe_zweitstimmen(alle_ergebnisse, laender_yaml, pfad):
+    """
+Schreibe Zweitstimmenergebnisse in Zweitstimmen.yaml
+
+    :param alle_ergebnisse: Daten des Bundeswahlleiters
+    :type alle_ergebnisse: pd.DataFrame
+    :param laender_yaml: Informationen zu den Bundesländern
+    :type laender_yaml: dict
+    :param pfad: Pfad des Arbeitsverzeichnisses
+    :type pfad: pathlib.Path
+    """
     gesamt_tabelle = pd.DataFrame()
     for land in laender_yaml.keys():
         ergebnis = alle_ergebnisse[
@@ -45,6 +85,18 @@ def download(pfad):
     with open(pfad / 'Zweitstimme.yaml', 'w', encoding='utf-8') as datei:
         yaml.dump(gesamt_tabelle.to_dict(), datei, sort_keys=False, encoding='utf-8', allow_unicode=True)
 
+
+def schreibe_erststimme(alle_ergebnisse, laender_yaml, pfad):
+    """
+    Schreibe Erststimmenergebnisse in Erststimmen.yaml
+
+    :param alle_ergebnisse: Daten des Bundeswahlleiters
+    :type alle_ergebnisse: pd.DataFrame
+    :param laender_yaml: Informationen zu den Bundesländern
+    :type laender_yaml: dict
+    :param pfad: Pfad des Arbeitsverzeichnisses
+    :type pfad: pathlib.Path
+    """
     ergebnis = alle_ergebnisse[
         (alle_ergebnisse['Gebietsart'] == 'Wahlkreis') & (alle_ergebnisse['Gruppenart'] == 'Partei') & (
                 alle_ergebnisse['Stimme'] == 1)]
@@ -67,7 +119,16 @@ def download(pfad):
     with open(pfad / 'Erststimme.yaml', 'w', encoding='utf-8') as datei:
         yaml.dump(bundesergebnis, datei, sort_keys=False, encoding='utf-8', allow_unicode=True)
 
-    kandidaten = pd.read_csv(pfad / 'daten/btw21_kandidaturen_utf8.csv', delimiter=';', skiprows=8, encoding='utf8')
+
+def schreibe_direktkandidaten(kandidaten, pfad):
+    """
+    Schreibe Direktkandidaten in Direktkandidaten.yaml
+
+    :param kandidaten: Informationen zu allen Kandidaten
+    :type kandidaten: pd.DataFrame
+    :param pfad: Pfad des Arbeitsverzeichnisses
+    :type pfad: pathlib.Path
+    """
     direkt = kandidaten.loc[kandidaten['Gebietsart'] == 'Wahlkreis']
     kandidaten_dict = {}
     for wahlkreis in direkt['Gebietsname'].drop_duplicates():
@@ -78,6 +139,16 @@ def download(pfad):
     with open(pfad / 'Direktkandidaten.yaml', 'w', encoding='utf-8') as datei:
         yaml.dump(kandidaten_dict, datei, sort_keys=False, encoding='utf-8', allow_unicode=True)
 
+
+def schreibe_listen(kandidaten, pfad):
+    """
+    Schreibe Listenkandidaten in Listenkandidaten.yaml
+
+    :param kandidaten: Informationen zu allen Kandidaten
+    :type kandidaten: pd.DataFrame
+    :param pfad: Pfad des Arbeitsverzeichnisses
+    :type pfad: pathlib.Path
+    """
     liste = kandidaten.loc[kandidaten['Gebietsart'] == 'Land']
     kandidaten_dict = {}
     for land in liste['Gebietsname'].drop_duplicates():
@@ -93,6 +164,7 @@ def download(pfad):
 
 
 class MyHTMLParser(HTMLParser):
+    """Der hier verwendete HTML-Parser"""
     def __init__(self, url, directory):
         super().__init__()
         self.flag = False
