@@ -6,7 +6,7 @@ from setuptools import setup
 main_ns = {}
 ver_path = convert_path('sitzverteilung/__init__.py')
 with open(ver_path, encoding='utf8') as ver_file:
-    exec(ver_file.read(), main_ns)
+    exec(ver_file.read(), main_ns)  # pylint: disable=exec-used
 
 setup(
     name='sitzverteilung',
