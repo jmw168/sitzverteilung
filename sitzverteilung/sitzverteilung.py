@@ -16,10 +16,8 @@ def sainte_lague_rangzahl(sitze, tabelle):
     """
 Nutze das Sainte-Laguë-Rangzahlverfahren zur Sitzberechnung
 
-    :param sitze: Anzahl zu verteilender Sitze
-    :type sitze: int
-    :param tabelle: Dataframe mit Stimmenverteilung
-    :type tabelle: pd.DataFrame
+    :param int sitze: Anzahl zu verteilender Sitze
+    :param pd.DataFrame tabelle: Dataframe mit Stimmenverteilung
     :return: Dataframe erweitert um Sitzverteilung, Liste für Verlosung
     :rtype: (pd.DataFrame, list)
     """
@@ -60,10 +58,8 @@ def sainte_lague_divisor(sitze, tabelle):
     """
 Nutze das Sainte-Laguë-Divisorverfahren zur Sitzberechnung
 
-    :param sitze: Anzahl zu verteilender Sitze
-    :type sitze: int
-    :param tabelle: Dataframe mit Stimmenverteilung
-    :type tabelle: pd.DataFrame
+    :param int sitze: Anzahl zu verteilender Sitze
+    :param pd.DataFrame tabelle: Dataframe mit Stimmenverteilung
     :return: Dataframe erweitert um Sitzverteilung, Liste für Verlosung
     :rtype: (pd.DataFrame, list)
     """
@@ -124,12 +120,9 @@ def sainte_lague(sitze, stimmen, methode='divisor'):
     """
 Nutze das Sainte-Laguë-Verfahren zur Sitzberechnung
 
-    :param sitze: Anzahl zu verteilender Sitze
-    :type sitze: int
-    :param stimmen: Dataframe mit Stimmenverteilung
-    :type stimmen: pd.DataFrame
-    :param methode: "divisor" (Standard) oder "rangzahl"
-    :type methode: str
+    :param int sitze: Anzahl zu verteilender Sitze
+    :param pd.DataFrame stimmen: Dataframe mit Stimmenverteilung
+    :param str methode: "divisor" (Standard) oder "rangzahl"
     :return: Dataframe erweitert um Sitzverteilung
     :rtype: pd.DataFrame
     """
@@ -176,7 +169,7 @@ def sitzverteilung(pfad):
     """
 Berechne die Sitzverteilung mit den Eingabedaten im Verzeichnis
 
-    :param pathlib.Path pfad: Verzeichnispfad
+    :param pfad: Verzeichnispfad
     """
     # Lade Daten aus Dateien
     laender_yaml = load_yaml(pfad / 'Länder.yaml')
@@ -323,7 +316,7 @@ def setze_einstellungen(pfad):
     """
 Parse die Einstellungen aus Einstellungen.yaml
 
-    :param pathlib.Path pfad: Verzeichnis
+    :param pfad: Verzeichnis
     :return: Einstellungen
     :rtype: dict
     """

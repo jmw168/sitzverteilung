@@ -5,7 +5,11 @@ Eine Internationalisierung/ internationale Lokalisierung könnte in Zukunft irge
 
 Um das Programm benutzen zu können, ist eine funktionierende Python-Umgebung erforderlich.
 Erforderliche Pakete finden sich in requirements.txt.
-Eine verfügbare Online-Anwendung ohne das Erfordernis von Python-Kenntnissen soll demnächst angeboten werden.
+Die Installation über `pip` erfordert keine Vorbereitungen.
+Eine passende `conda` Umgebung kann über `conda create --name sitzverteilung --file requirements.txt` eingerichtet
+werden.
+Zur Installation einfach `pip install -e .` ausführen.
+Eine verfügbare Online-Anwendung ohne die Erfordernis von Python-Kenntnissen soll demnächst angeboten werden.
 
 Um das Programm im vollen Umfang zu nutzen, kann man es ganz einfach ausführen: 
 `python sitzverteilungsrechner.py`

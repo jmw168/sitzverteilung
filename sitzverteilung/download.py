@@ -7,7 +7,7 @@ import pandas as pd
 import requests
 import yaml
 
-from sitzverteilung.hilfsmittel import load_yaml  # pylint: disable=import-error
+from sitzverteilung.hilfsmittel import load_yaml
 
 UNIONSMERGER = False
 

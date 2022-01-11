@@ -3,8 +3,8 @@
 import argparse
 from pathlib import Path
 
-from sitzverteilung.download import download  # pylint: disable=import-error
-from sitzverteilung.sitzverteilung import sitzverteilung  # pylint: disable=import-error
+from sitzverteilung.download import download
+from sitzverteilung.sitzverteilung import sitzverteilung
 
 
 def parse():
