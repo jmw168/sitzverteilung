@@ -1,11 +1,10 @@
 """Installationsdatei für das Paket sitzverteilung"""
-from setuptools import setup
 
-import sitzverteilung
+from setuptools import setup
 
 setup(
     name='sitzverteilung',
-    version=sitzverteilung.__version__,
+    version='0.1.0',
     packages=['sitzverteilung'],
     url='https://github.com/jmw168/sitzverteilung',
     license='',
