@@ -1,11 +1,16 @@
 """Installationsdatei für das Paket sitzverteilung"""
+from distutils.util import convert_path
+
 from setuptools import setup
 
-import sitzverteilung
+main_ns = {}
+ver_path = convert_path('sitzverteilung/__init__.py')
+with open(ver_path, encoding='utf8') as ver_file:
+    exec(ver_file.read(), main_ns)
 
 setup(
     name='sitzverteilung',
-    version=sitzverteilung.__version__,
+    version=main_ns['__version__'],
     packages=['sitzverteilung'],
     url='https://github.com/jmw168/sitzverteilung',
     license='',
