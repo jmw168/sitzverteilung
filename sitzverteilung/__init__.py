@@ -1,1 +1,1 @@
-"""Sitzverteilungsrechner nach art des Bundestages"""   # pylint: disable=invalid-name
+"""Sitzverteilungsrechner nach art des Bundestages"""  # pylint: disable=invalid-name
