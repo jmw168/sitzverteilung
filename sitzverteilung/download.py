@@ -221,7 +221,7 @@ class MyHTMLParser(HTMLParser):
         self.url = url
         self.directory = directory
 
-    def error(self, message):  # pylint: disable=missing-function-docstring, no-self-use
+    def error(self, message):  # pylint: disable=missing-function-docstring
         print("Encountered an error:", message)
 
     def handle_starttag(self, tag, attrs):
